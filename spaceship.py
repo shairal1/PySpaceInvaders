@@ -1,8 +1,8 @@
 import pygame
-
+import speech_recognition as sr
 from config import *
 from tools import MovingDirection
-
+import threading
 
 class Missile:
     def __init__(self):
@@ -90,6 +90,7 @@ class Spaceship:
         self.is_destroyed = False
         self.delay_since_explosion = 0
         self.is_active = True
+        
 
     def reset(self):
         self.shoot_sound.stop()
@@ -110,6 +111,7 @@ class Spaceship:
 
         # First, we check the user input
         self._handle_events(events)
+      #  self.listen_for_launch_command()
 
         # If spaceship is not destroyed
         if not self.is_destroyed:
@@ -157,7 +159,28 @@ class Spaceship:
 
                 if event.key == pygame.K_SPACE:
                     self.is_firing = False
+    def listen_for_launch_command(self):
+        recognizer = sr.Recognizer()
+        mic = sr.Microphone()
 
+        while self.is_active:
+            with mic as source:
+                recognizer.adjust_for_ambient_noise(source)
+                print("Listening for launch command...")
+                audio = recognizer.listen(source)
+
+            try:
+                command = recognizer.recognize_google(audio)
+                print(f"Heard: {command}")
+                if "fire" in command.lower():
+                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_SPACE}))
+                    print("Firing command recognized!")
+                else:
+                    self.is_firing = False
+            except sr.UnknownValueError:
+                print("Could not understand the command")
+            except sr.RequestError:
+                print("Could not request results; check your network connection")
     def _move(self, dt):
 
         # If no moving direction, stay idle

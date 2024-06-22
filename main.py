@@ -2,8 +2,12 @@ import math
 import random
 import sys
 
+import threading
 import pygame
+import speech_recognition as sr
 
+from config import *
+from tools import MovingDirection
 from alien import Aliens
 from config import *
 from decor import Ground, Barricades
@@ -39,6 +43,8 @@ class PySpaceInvaders:
 
     def play(self):
         clock = pygame.time.Clock()
+        #pygame_thread = threading.Thread(target=self.spaceship.listen_for_launch_command)
+        #pygame_thread.start()
         while True:
             dt = clock.tick()
 
@@ -61,6 +67,8 @@ class PySpaceInvaders:
             frame_count = self._get_frame_count(dt)
             if frame_count > 0:
                 self._draw()
+            #pygame_thread.join()
+          
 
     def _update(self, dt):
 
