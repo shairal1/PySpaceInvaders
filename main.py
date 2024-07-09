@@ -57,6 +57,7 @@ class PySpaceInvaders:
                 # Here, it's all the update that involves several entities, like collision
                 self._update_life_count()
                 self._collide()
+            
 
             frame_count = self._get_frame_count(dt)
             if frame_count > 0:
@@ -66,7 +67,7 @@ class PySpaceInvaders:
 
         # Getting input events
         events = self._get_events()
-
+       
         # Updating each entity
         self.spaceship.update(dt, events)
         self.aliens.update(dt)
