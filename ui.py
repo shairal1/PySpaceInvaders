@@ -9,6 +9,7 @@ class Score:
         self.value = 0
         self.digit_sprites = [pygame.image.load(SPRITE_PATH + str(i) + ".png") for i in range(0, 10)]
         self.score_sprite = pygame.image.load(SPRITE_PATH + "score.png")
+        
 
     def draw(self, surf: pygame.Surface):
         score_str = str(self.value)
@@ -20,6 +21,7 @@ class Score:
         r = self.digit_sprites[0].get_rect()
         r.topleft = (x0, y0 - (r.h * 2))
         surf.blit(self.score_sprite, r)
+       
 
         for digit in score_str:
             r.topleft = (x0, y0)

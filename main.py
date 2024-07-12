@@ -37,6 +37,9 @@ class PySpaceInvaders:
         self.life_counter = LifeCounter()
         self.game_over = GameOver()
 
+
+        
+
     def play(self):
         clock = pygame.time.Clock()
         while True:
@@ -107,7 +110,7 @@ class PySpaceInvaders:
     def _draw(self):
 
         # First we clear everything from screen
-        self.window_surface.fill((0, 0, 0,))
+        self.window_surface.fill((216, 216, 216,))
 
         # We draw each entity
         self.ground.draw(self.window_surface)
@@ -123,6 +126,7 @@ class PySpaceInvaders:
 
         # We show the screen
         pygame.display.flip()
+        
 
     def _get_frame_count(self, dt):
         # Incrementing delay since previous frame
@@ -302,7 +306,7 @@ class PySpaceInvaders:
         for y in range(barricade.rect.h):
             for x in range(barricade.rect.w):
                 if barricade.mask.get_at((x, y)) == 0:
-                    surf_array[x, y] = (0, 0, 0)
+                    surf_array[x, y] = (216, 216, 216)
 
         # make sprite from surfarray.
         barricade.sprite = pygame.surfarray.make_surface(surf_array)
