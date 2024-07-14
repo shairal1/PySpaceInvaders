@@ -3,14 +3,14 @@ import speech_recognition as sr
 from config import *
 from tools import MovingDirection
 import threading
-latest_command=None
+
+latest_command = None
+
 class Missile:
     def __init__(self):
         self.rect = None
-
         self.moving_direction = MovingDirection.UP
         self.move_amount = 0
-
         self.time_since_explosion = 0
         self.explosion_sprite = pygame.image.load(SPRITE_PATH + MISSILE_EXPLOSION_SPRITE_NAME)
         self.is_exploded = False
@@ -20,47 +20,33 @@ class Missile:
         self.rect = rect
         self.moving_direction = MovingDirection.UP
         self.move_amount = 0
-
         self.is_exploded = False
         self.time_since_explosion = 0
         self.is_active = True
 
     def update(self, dt):
-
         if not self.is_active:
             return
-
         if self.is_exploded:
             self.time_since_explosion += dt
         else:
             self._move(dt)
 
     def _move(self, dt):
-
-        # If no moving direction, stay idle
         if self.moving_direction == MovingDirection.IDLE:
             return
-
-        # Else, compute how many pixel to move
         dt_s = dt / 1000
         self.move_amount += dt_s * MISSILE_SPEED_PIXEL_PER_SECOND
-
-        # If more than one, we move the sprite
         if self.move_amount > 1.:
             direction = -1 if self.moving_direction == MovingDirection.UP else 1
             self.rect.y += int(self.move_amount) * direction
             self.move_amount -= int(self.move_amount)
 
     def draw(self, surf: pygame.Surface):
-
         if not self.is_active:
             return
-
-        # If exploded, we show the explosion sprite
         if self.is_exploded:
             surf.blit(self.explosion_sprite, self.explosion_sprite.get_rect(center=self.rect.center))
-
-        # Else, we draw the missile
         else:
             pygame.draw.rect(surf, MISSILE_RECT_COLOR, self.rect)
 
@@ -75,20 +61,15 @@ class Spaceship:
         self.sprite = pygame.image.load(SPRITE_PATH + SPACESHIP_SPRITE_NAME)
         self.rect = self.sprite.get_rect(center=SPACESHIP_STARTING_POSITION)
         self.destruction_sprite = pygame.image.load(SPRITE_PATH + SPACESHIP_DESTRUCTION_SPRITE_NAME)
-
         self.shoot_sound = pygame.mixer.Sound(SOUND_PATH + SPACESHIP_SHOOT_SOUND)
         self.destruction_sound = pygame.mixer.Sound(SOUND_PATH + SPACESHIP_DESTRUCTION_SOUND)
-
         self.moving_direction = MovingDirection.IDLE
         self.move_amount = 0
-
         self.is_firing = False
         self.missile = Missile()
-        self.is_destroyed = False
+        self.is_destroyed = False  # Ensure this attribute is initialized
         self.delay_since_explosion = 0
         self.is_active = True
-
-        # Start listening thread
         self.recognizer = sr.Recognizer()
         self.microphone = sr.Microphone()
         self.recognition_thread = None
@@ -98,23 +79,16 @@ class Spaceship:
     def reset(self):
         self.shoot_sound.stop()
         self.destruction_sound.stop()
-
         self.rect = self.sprite.get_rect(center=SPACESHIP_STARTING_POSITION)
-        
         self.moving_direction = MovingDirection.IDLE
         self.move_amount = 0
-
         self.is_firing = False
-
         self.is_destroyed = False
         self.delay_since_explosion = 0
         self.is_active = True
 
     def update(self, dt, events):
-        # First, we check the user input
         self._handle_events(events)
-       
-        # If spaceship is not destroyed
         if not self.is_destroyed:
             self._move(dt)
             self._update_missile(dt)
@@ -123,7 +97,6 @@ class Spaceship:
             self.delay_since_explosion += dt
             if self.is_destroyed and self.delay_since_explosion > SPACESHIP_EXPLOSION_DURATION_MS:
                 self.is_active = False
-       
 
     def start_listening(self):
         print("Starting listening thread...")
@@ -136,7 +109,7 @@ class Spaceship:
         self.should_listen = False
         if self.recognition_thread:
             self.recognition_thread.join()
-            self.recognition_thread = None 
+            self.recognition_thread = None
 
     def listen_for_launch_command(self):
         global latest_command
@@ -147,29 +120,14 @@ class Spaceship:
                 audio = self.recognizer.listen(source)
                 try:
                     command = self.recognizer.recognize_google(audio)
-                    latest_command=command.lower
+                    latest_command = command.lower()
                     print(f"Heard: {command}")
-                    if "fire" in command.lower():
-                         # Set firing flag to true
-                       
-                        self.missile.launch(self.rect.copy())
-                        #self.missile.launch(self.rect.copy())
-                        #self.missile.launch(self.rect.copy())
-                       
-
-                        print("Firing command recognized!")
-                    if "left" in command.lower():
-                        self.rect.x=-1
-                    if "right" in command.lower():
-                        self.rect.x=+1
-                    
-                    if self.rect.left < 0:
-                        self.rect.x = 0
-                    if self.rect.right >= WORLD_DIM[0]:
-                        self.rect.right = WORLD_DIM[0] - 1
-                    
-
-                    
+                    if "fire" in latest_command:
+                        self.is_firing = True
+                    elif "left" in latest_command:
+                        self.moving_direction = MovingDirection.LEFT
+                    elif "right" in latest_command:
+                        self.moving_direction = MovingDirection.RIGHT
                 except sr.UnknownValueError:
                     print("Could not understand the command")
                 except sr.RequestError:
@@ -184,7 +142,6 @@ class Spaceship:
                 surf.blit(self.destruction_sprite, self.rect)
             else:
                 surf.blit(self.sprite, self.rect)
-
         if self.missile.is_active:
             self.missile.draw(surf)
 
@@ -193,66 +150,50 @@ class Spaceship:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     self.moving_direction = MovingDirection.LEFT
-                if event.key == pygame.K_RIGHT:
+                elif event.key == pygame.K_RIGHT:
                     self.moving_direction = MovingDirection.RIGHT
-                if event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_SPACE:
                     self.is_firing = True
-
-            if event.type == pygame.KEYUP:
+            elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and self.moving_direction == MovingDirection.LEFT:
                     self.moving_direction = MovingDirection.IDLE
-                if event.key == pygame.K_RIGHT and self.moving_direction == MovingDirection.RIGHT:
+                elif event.key == pygame.K_RIGHT and self.moving_direction == MovingDirection.RIGHT:
                     self.moving_direction = MovingDirection.IDLE
-                if event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_SPACE:
                     self.is_firing = False
 
     def _move(self, dt):
-        # If no moving direction, stay idle
         if self.moving_direction == MovingDirection.IDLE:
             return
-
-        # Else, check how many pixels to move
         dt_s = dt / 1000
         self.move_amount += dt_s * SPACESHIP_SPEED_PIXEL_PER_SECOND
         if self.move_amount > 1.:
-            # move in the given direction
             direction = -1 if self.moving_direction == MovingDirection.LEFT else 1
             self.rect.x += int(self.move_amount) * direction
             self.move_amount -= int(self.move_amount)
-
-            # check if out of world rect
             if self.rect.left < 0:
                 self.rect.x = 0
             if self.rect.right >= WORLD_DIM[0]:
                 self.rect.right = WORLD_DIM[0] - 1
-        
 
     def _update_missile(self, dt):
         if not self.missile.is_active:
             return
         self.missile.update(dt)
-
-        # check if out of world rect
         if self.missile.rect.top < 0:
             self.missile.rect.top = 0
             self.missile.explode()
-
-        # If missile is destroyed and explosion is over, remove missile
         if self.missile.time_since_explosion > ALIEN_EXPLOSION_DURATION_MS:
             self.missile.set_inactive()
 
     def _fire(self):
-        # If spaceship is not firing, return
         if not self.is_firing:
             return
-
-        # Firing only when there is no actual missile, only one missile at a time
         if self.missile.is_active:
             return
-
-        # launch missile and play the sound
         self._launch_missile()
         self.shoot_sound.play()
+        self.is_firing = False
 
     def destroy(self):
         self.is_destroyed = True
@@ -260,7 +201,7 @@ class Spaceship:
 
     def _launch_missile(self):
         missile_rect = pygame.Rect(
-            self.rect.centerx - (MISSILE_RECT_DIM[0] ),
+            self.rect.centerx - (MISSILE_RECT_DIM[0]),
             self.rect.top - MISSILE_RECT_DIM[1],
             MISSILE_RECT_DIM[0],
             MISSILE_RECT_DIM[1]
